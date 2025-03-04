@@ -152,10 +152,6 @@ function showHint() {
         {
             text: `Tip: Stel je voor dat je ${multiplierNum} groepjes van ${currentTable} snoepjes hebt`,
             type: 'concreet'
-        },
-        {
-            text: `Tip: Als je ${currentTable} stoelpoten hebt en ${multiplierNum} stoelen, hoeveel poten zijn dat dan?`,
-            type: 'concreet'
         }
     ]);
     
@@ -237,7 +233,7 @@ function visualizeHint(type, table, multiplier) {
                 minSign.textContent = '-';
                 baseContainer.appendChild(minSign);
                 
-                baseContainer.appendChild(createGroup(1, table, 'extra'));
+                baseContainer.appendChild(createGroup(1, table, ''));
             } else {
                 // Voor andere getallen: splits in twee delen
                 const firstPart = multiplier - 1;
@@ -249,7 +245,7 @@ function visualizeHint(type, table, multiplier) {
                 plusSign.textContent = '+';
                 baseContainer.appendChild(plusSign);
                 
-                baseContainer.appendChild(createGroup(1, table, 'extra'));
+                baseContainer.appendChild(createGroup(1, table, ''));
             }
             
             hintVisualization.appendChild(baseContainer);
