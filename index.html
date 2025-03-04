@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leer de Tafels! 🎮</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Leer de Tafels! 🎮</h1>
+        <div class="game-box">
+            <div class="score-container">
+                <p>Punten: <span id="score">0</span> ⭐</p>
+                <p>Streak: <span id="streak">0</span> 🔥</p>
+                <p>Beste Streak: <span id="best-streak">0</span> 🏆</p>
+                <p>Hoogste Score: <span id="high-score">0</span> 🌟</p>
+            </div>
+            <div class="question-box">
+                <p id="question">Kies een tafel om te oefenen!</p>
+            </div>
+            <div class="answer-box">
+                <input type="number" id="answer" placeholder="Jouw antwoord" min="0">
+                <button id="hint">💡 Hint</button>
+                <button id="check">Controleer</button>
+            </div>
+            <div class="hint-visualization" id="hint-visualization"></div>
+            <div class="feedback" id="feedback"></div>
+        </div>
+        <div class="tables-selection">
+            <h2>Kies een tafel:</h2>
+            <div class="table-buttons">
+                <button class="table-btn" data-table="1">Tafel van 1</button>
+                <button class="table-btn" data-table="2">Tafel van 2</button>
+                <button class="table-btn" data-table="3">Tafel van 3</button>
+                <button class="table-btn" data-table="4">Tafel van 4</button>
+                <button class="table-btn" data-table="5">Tafel van 5</button>
+                <button class="table-btn" data-table="6">Tafel van 6</button>
+                <button class="table-btn" data-table="7">Tafel van 7</button>
+                <button class="table-btn" data-table="8">Tafel van 8</button>
+                <button class="table-btn" data-table="9">Tafel van 9</button>
+                <button class="table-btn" data-table="10">Tafel van 10</button>
+                <button class="table-btn random">Willekeurige Tafel 🎲</button>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html> 
