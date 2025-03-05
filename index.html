@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leer de Tafels! 🎮</title>
+    <title>Leer de Tafels!</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -11,13 +11,15 @@
 </head>
 <body>
     <div class="container">
-        <h1>Leer de Tafels! 🎮</h1>
-        <div class="game-box">
+        <h1>Leer de Tafels!</h1>
+        <div id="game-container">
+            <div id="timer-bar"></div>
             <div class="score-container">
                 <p>Punten: <span id="score">0</span> ⭐</p>
                 <p>Streak: <span id="streak">0</span> 🔥</p>
                 <p>Beste Streak: <span id="best-streak">0</span> 🏆</p>
                 <p>Hoogste Score: <span id="high-score">0</span> 🌟</p>
+                <p>Snelheidsbonus: <span id="speed-bonus-count">0</span> ⚡</p>
             </div>
             <div class="question-box">
                 <p id="question">Kies een tafel om te oefenen!</p>

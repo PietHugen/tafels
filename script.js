@@ -3,6 +3,11 @@ let score = 0;
 let streak = 0;
 let bestStreak = 0;
 let highScore = 0;
+let speedBonusCount = 0;
+let timerInterval = null;
+let questionStartTime = null;
+const MAX_TIME = 15000; // 15 seconden
+const BONUS_THRESHOLD = 10000; // 10 seconden voor bonus
 
 const questionElement = document.getElementById('question');
 const answerInput = document.getElementById('answer');
@@ -14,21 +19,56 @@ const scoreElement = document.getElementById('score');
 const streakElement = document.getElementById('streak');
 const bestStreakElement = document.getElementById('best-streak');
 const highScoreElement = document.getElementById('high-score');
+const speedBonusCountElement = document.getElementById('speed-bonus-count');
 
 // Voeg geluidseffecten toe
 const sounds = {
-    success1: new Audio('https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3'),
-    success2: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'),
-    success3: new Audio('https://assets.mixkit.co/active_storage/sfx/2001/2001-preview.mp3')
+    success1: {
+        url: 'https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3',
+        audio: null,
+        loaded: false
+    },
+    success2: {
+        url: 'https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3',
+        audio: null,
+        loaded: false
+    },
+    success3: {
+        url: 'https://assets.mixkit.co/active_storage/sfx/2001/2001-preview.mp3',
+        audio: null,
+        loaded: false
+    }
 };
+
+// Laad alle geluiden vooraf
+function preloadSounds() {
+    Object.keys(sounds).forEach(key => {
+        const sound = sounds[key];
+        const audio = new Audio();
+        
+        audio.addEventListener('canplaythrough', () => {
+            sound.loaded = true;
+            sound.audio = audio;
+        });
+        
+        audio.addEventListener('error', () => {
+            console.log(`Kon geluid ${key} niet laden`);
+            sound.loaded = false;
+        });
+        
+        audio.src = sound.url;
+    });
+}
 
 // Laad opgeslagen scores bij het starten
 function loadScores() {
     const savedBestStreak = localStorage.getItem('bestStreak');
     const savedHighScore = localStorage.getItem('highScore');
+    const savedSpeedBonusCount = localStorage.getItem('speedBonusCount');
     
     if (savedBestStreak) bestStreak = parseInt(savedBestStreak);
     if (savedHighScore) highScore = parseInt(savedHighScore);
+    if (savedSpeedBonusCount) speedBonusCount = parseInt(savedSpeedBonusCount);
     
     updateScoreDisplay();
 }
@@ -37,6 +77,7 @@ function loadScores() {
 function saveScores() {
     localStorage.setItem('bestStreak', bestStreak);
     localStorage.setItem('highScore', highScore);
+    localStorage.setItem('speedBonusCount', speedBonusCount);
 }
 
 // Update alle score displays
@@ -45,6 +86,7 @@ function updateScoreDisplay() {
     streakElement.textContent = streak;
     bestStreakElement.textContent = bestStreak;
     highScoreElement.textContent = highScore;
+    speedBonusCountElement.textContent = speedBonusCount;
 }
 
 // Event listeners voor de tafel knoppen
@@ -73,6 +115,39 @@ answerInput.addEventListener('keypress', (e) => {
     }
 });
 
+function startTimer() {
+    const timerBar = document.getElementById('timer-bar');
+    if (!timerBar) return;
+
+    // Reset de timer
+    clearInterval(timerInterval);
+    timerBar.style.animation = 'none';
+    void timerBar.offsetWidth; // Force reflow
+    timerBar.style.animation = `timerAnimation ${MAX_TIME}ms linear forwards`;
+    
+    questionStartTime = Date.now();
+}
+
+function stopTimer() {
+    const timerBar = document.getElementById('timer-bar');
+    if (!timerBar) return;
+
+    clearInterval(timerInterval);
+    timerBar.style.animation = 'none';
+}
+
+function calculateTimeBonus() {
+    if (!questionStartTime) return 0;
+    
+    const timeTaken = Date.now() - questionStartTime;
+    if (timeTaken <= BONUS_THRESHOLD) {
+        // Meer geleidelijke bonus berekening
+        const bonusPoints = Math.floor((BONUS_THRESHOLD - timeTaken) / 2000); // Elke 2 seconden een punt
+        return Math.min(5, Math.max(1, bonusPoints)); // Minimaal 1, maximaal 5 punten
+    }
+    return 0;
+}
+
 function generateQuestion() {
     const multiplier = Math.floor(Math.random() * 10) + 1;
     const answer = currentTable * multiplier;
@@ -81,6 +156,7 @@ function generateQuestion() {
     feedbackElement.textContent = '';
     hintVisualization.innerHTML = '';
     answerInput.focus();
+    startTimer();
 }
 
 function showHint() {
@@ -427,24 +503,69 @@ function createCelebration() {
 
 // Helper functie om een willekeurig geluid af te spelen
 function playRandomSuccessSound() {
+    // Filter alleen de geladen geluiden
+    const loadedSounds = Object.keys(sounds).filter(key => sounds[key].loaded);
+    
+    if (loadedSounds.length === 0) {
+        console.log('Geen geluiden beschikbaar');
+        return;
+    }
+    
     try {
-        const soundKeys = Object.keys(sounds);
-        const randomSound = sounds[soundKeys[Math.floor(Math.random() * soundKeys.length)]];
-        // Reset de audio naar het begin
-        randomSound.currentTime = 0;
-        // Zet het volume op een aangenaam niveau
-        randomSound.volume = 0.5;
-        // Speel het geluid af
-        const playPromise = randomSound.play();
+        const randomKey = loadedSounds[Math.floor(Math.random() * loadedSounds.length)];
+        const sound = sounds[randomKey];
         
-        if (playPromise !== undefined) {
-            playPromise.catch(error => {
+        if (sound && sound.audio) {
+            // Reset de audio naar het begin
+            sound.audio.currentTime = 0;
+            // Zet het volume op een aangenaam niveau
+            sound.audio.volume = 0.5;
+            // Speel het geluid af
+            sound.audio.play().catch(error => {
                 console.log('Audio afspelen mislukt:', error);
             });
         }
     } catch (error) {
         console.log('Fout bij het afspelen van geluid:', error);
     }
+}
+
+// Helper functie voor het maken van het speed boost effect
+function createSpeedBoost(element, bonusPoints) {
+    const speedEmojis = ['⚡', '🚀', '💨'];
+    const container = document.createElement('div');
+    container.style.position = 'absolute';
+    container.style.top = '0';
+    container.style.left = '0';
+    container.style.width = '100%';
+    container.style.height = '100%';
+    container.style.pointerEvents = 'none';
+    container.style.zIndex = '1000';
+    document.body.appendChild(container);
+
+    // Maak meerdere speed boosts gebaseerd op bonus punten
+    for (let i = 0; i < bonusPoints; i++) {
+        const boost = document.createElement('div');
+        boost.className = 'speed-boost';
+        boost.textContent = speedEmojis[Math.floor(Math.random() * speedEmojis.length)];
+        
+        // Bereken positie relatief aan het element
+        const rect = element.getBoundingClientRect();
+        boost.style.left = rect.left + 'px';
+        boost.style.top = (rect.top + (i * 60)) + 'px';
+        
+        // Voeg trail effect toe
+        const trail = document.createElement('div');
+        trail.className = 'speed-trail';
+        boost.appendChild(trail);
+        
+        container.appendChild(boost);
+    }
+
+    // Verwijder de container na de animatie
+    setTimeout(() => {
+        document.body.removeChild(container);
+    }, 1500);
 }
 
 function checkAnswer() {
@@ -459,7 +580,9 @@ function checkAnswer() {
     const correctAnswer = currentTable * parseInt(multiplier);
 
     if (userAnswer === correctAnswer) {
-        score += 10;
+        stopTimer();
+        const timeBonus = calculateTimeBonus();
+        score += 10 + timeBonus;
         streak++;
         
         // Update bestStreak en highScore
@@ -472,8 +595,18 @@ function checkAnswer() {
             saveScores();
         }
         
-        feedbackElement.textContent = getPositiveFeedback();
-        feedbackElement.className = 'feedback correct';
+        let feedbackText = getPositiveFeedback();
+        if (timeBonus > 0) {
+            speedBonusCount++;
+            saveScores();
+            feedbackText += ` SUPER SNEL! +${timeBonus} extra punt${timeBonus === 1 ? '' : 'en'}! 🚀`;
+            // Voeg speed boost effect toe
+            createSpeedBoost(feedbackElement, timeBonus);
+            feedbackElement.className = 'feedback correct with-bonus';
+        } else {
+            feedbackElement.className = 'feedback correct';
+        }
+        feedbackElement.textContent = feedbackText;
         
         // Start de viering en speel geluid
         createCelebration();
@@ -482,9 +615,11 @@ function checkAnswer() {
         // Update alle score displays
         updateScoreDisplay();
         
-        // Genereer nieuwe vraag na langere vertraging (2 seconden)
-        setTimeout(generateQuestion, 2000);
+        // Genereer nieuwe vraag na een vertraging die afhangt van of er een bonus was
+        const delay = timeBonus > 0 ? 3500 : 2000; // 3.5 seconden voor bonus, 2 seconden normaal
+        setTimeout(generateQuestion, delay);
     } else {
+        stopTimer();
         streak = 0;
         updateScoreDisplay();
         feedbackElement.textContent = `Helaas, dat is niet correct. Het juiste antwoord is ${correctAnswer}. Probeer het nog een keer!`;
@@ -519,4 +654,7 @@ answerInput.focus();
 function generateRandomTable() {
     currentTable = Math.floor(Math.random() * 10) + 1;
     generateQuestion();
-} 
+}
+
+// Start het laden van de geluiden
+preloadSounds(); 
