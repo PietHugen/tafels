@@ -165,19 +165,18 @@ button:hover {
 }
 
 .group {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 15px;
     padding: 10px;
-    border: 2px dashed #FFB6C1;
-    border-radius: 8px;
-    margin: 5px;
+    margin: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .dot-row {
     display: flex;
     justify-content: center;
-    gap: 4px;
+    align-items: center;
+    margin: 2px 0;
 }
 
 .group.extra {

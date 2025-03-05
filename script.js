@@ -51,7 +51,7 @@ function updateScoreDisplay() {
 document.querySelectorAll('.table-btn').forEach(button => {
     button.addEventListener('click', () => {
         if (button.classList.contains('random')) {
-            currentTable = Math.floor(Math.random() * 10) + 1;
+            currentTable = Math.floor(Math.random() * 11) + 2; // Random getal tussen 2 en 12
         } else {
             currentTable = parseInt(button.dataset.table);
         }
@@ -100,8 +100,21 @@ function showHint() {
     if (currentTable.toString().includes('9') || multiplierNum === 9) {
         hints.push({
             text: `Tip: Bereken eerst ${currentTable} × 10 en trek dan ${currentTable} eraf`,
-            type: 'makkelijker'
+            type: 'makkelijker',
+            extraData: { type: 'via10' }
         });
+    }
+    
+    // Voor tafels van 11 en 12, gebruik de strategie via het volgende getal
+    if (currentTable >= 11) {
+        const nextMultiple = (Math.floor(multiplierNum / 5) + 1) * 5;
+        if (nextMultiple <= 10) {
+            hints.push({
+                text: `Tip: Bereken eerst ${currentTable} × ${nextMultiple} en trek dan ${currentTable} × ${nextMultiple - multiplierNum} eraf`,
+                type: 'makkelijker',
+                extraData: { targetMultiple: nextMultiple }
+            });
+        }
     }
     
     // Voeg de andere strategieën toe
@@ -119,22 +132,26 @@ function showHint() {
         // Makkelijkere tafel als tussenstap
         {
             text: `Tip: Bereken eerst ${currentTable} × ${multiplierNum - 1} en tel dan ${currentTable} erbij op`,
-            type: 'makkelijker'
+            type: 'makkelijker',
+            extraData: { type: 'viaPrev' }
         },
         {
             text: `Tip: Bereken eerst ${currentTable} × ${multiplierNum + 1} en trek dan ${currentTable} eraf`,
-            type: 'makkelijker'
+            type: 'makkelijker',
+            extraData: { type: 'viaNext' }
         },
         ...(multiplierNum > 5 && !currentTable.toString().includes('9') && multiplierNum !== 9 ? [
             {
                 text: `Tip: Bereken eerst ${currentTable} × 5 en tel dan ${currentTable} × ${multiplierNum - 5} erbij op`,
-                type: 'makkelijker'
+                type: 'makkelijker',
+                extraData: { type: 'via5' }
             }
         ] : []),
         ...(multiplierNum > 10 && !currentTable.toString().includes('9') && multiplierNum !== 9 ? [
             {
                 text: `Tip: Bereken eerst ${currentTable} × 10 en trek dan ${currentTable} × ${10 - multiplierNum} eraf`,
-                type: 'makkelijker'
+                type: 'makkelijker',
+                extraData: { type: 'via10' }
             }
         ] : []),
         
@@ -163,10 +180,10 @@ function showHint() {
     feedbackElement.className = 'feedback';
     
     // Visualiseer de hint
-    visualizeHint(randomHint.type, currentTable, multiplierNum);
+    visualizeHint(randomHint.type, currentTable, multiplierNum, randomHint.extraData);
 }
 
-function visualizeHint(type, table, multiplier) {
+function visualizeHint(type, table, multiplier, extraData = {}) {
     // Maak de visualisatie container leeg
     hintVisualization.innerHTML = '';
     
@@ -174,9 +191,16 @@ function visualizeHint(type, table, multiplier) {
     function createDotRow(count, extraClass = '') {
         const row = document.createElement('div');
         row.className = 'dot-row';
+        const candies = ['🍬', '🍭', '🍪', '🧁', '🍫', '🍩'];
+        const fruits = ['🍎', '🍐', '🍊', '🍌', '🍇', '🍓'];
+        // Kies willekeurig tussen snoep of fruit voor deze groep
+        const emojiSet = Math.random() < 0.5 ? candies : fruits;
+        // Kies één willekeurige emoji voor deze rij
+        const emojiForThisRow = emojiSet[Math.floor(Math.random() * emojiSet.length)];
         for (let i = 0; i < count; i++) {
             const dot = document.createElement('div');
             dot.className = `dot ${extraClass}`;
+            dot.textContent = emojiForThisRow;
             row.appendChild(dot);
         }
         return row;
@@ -224,8 +248,8 @@ function visualizeHint(type, table, multiplier) {
             const baseContainer = document.createElement('div');
             baseContainer.className = 'group-container';
 
-            if (currentTable.toString().includes('9') || multiplier === 9) {
-                // Voor 9: laat 10 rijen zien en trek er 1 af
+            if (extraData.type === 'via10') {
+                // Via de tafel van 10
                 baseContainer.appendChild(createGroup(10, table, ''));
                 
                 const minSign = document.createElement('div');
@@ -234,11 +258,39 @@ function visualizeHint(type, table, multiplier) {
                 baseContainer.appendChild(minSign);
                 
                 baseContainer.appendChild(createGroup(1, table, ''));
-            } else {
-                // Voor andere getallen: splits in twee delen
-                const firstPart = multiplier - 1;
+            } else if (extraData.targetMultiple) {
+                // Voor tafels van 11 en 12: gebruik het hogere veelvoud
+                baseContainer.appendChild(createGroup(extraData.targetMultiple, table, ''));
                 
-                baseContainer.appendChild(createGroup(firstPart, table));
+                const minSign = document.createElement('div');
+                minSign.className = 'plus-sign';
+                minSign.textContent = '-';
+                baseContainer.appendChild(minSign);
+                
+                baseContainer.appendChild(createGroup(extraData.targetMultiple - multiplier, table, ''));
+            } else if (extraData.type === 'via5') {
+                // Via de tafel van 5
+                baseContainer.appendChild(createGroup(5, table, ''));
+                
+                const plusSign = document.createElement('div');
+                plusSign.className = 'plus-sign';
+                plusSign.textContent = '+';
+                baseContainer.appendChild(plusSign);
+                
+                baseContainer.appendChild(createGroup(multiplier - 5, table, ''));
+            } else if (extraData.type === 'viaNext') {
+                // Via het volgende getal
+                baseContainer.appendChild(createGroup(multiplier + 1, table, ''));
+                
+                const minSign = document.createElement('div');
+                minSign.className = 'plus-sign';
+                minSign.textContent = '-';
+                baseContainer.appendChild(minSign);
+                
+                baseContainer.appendChild(createGroup(1, table, ''));
+            } else if (extraData.type === 'viaPrev') {
+                // Via het vorige getal
+                baseContainer.appendChild(createGroup(multiplier - 1, table, ''));
                 
                 const plusSign = document.createElement('div');
                 plusSign.className = 'plus-sign';
