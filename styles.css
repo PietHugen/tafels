@@ -46,18 +46,6 @@ h1 {
     -webkit-text-fill-color: transparent;
     animation: rainbow-text 8s linear infinite;
     background-size: 200% auto;
-    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);
-    position: relative;
-}
-
-h1::after {
-    content: '🌈';
-    position: absolute;
-    right: -50px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 0.8em;
-    opacity: 0.9;
 }
 
 @keyframes rainbow-text {
